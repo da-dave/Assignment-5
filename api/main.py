@@ -1,9 +1,11 @@
+from http.client import responses
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import models, schemas
-from .controllers import orders, sandwiches, resources
+from .controllers import orders, sandwiches, resources, recipes
 from .dependencies.database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -27,7 +29,7 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/orders/", response_model=list[schemas.Order], tags=["Orders"])
-def read_orders(db: Session = Depends(get_db)):
+def read_all_orders(db: Session = Depends(get_db)):
     return orders.read_all(db)
 
 
@@ -60,7 +62,7 @@ def create_sandwich(sandwich: schemas.SandwichCreate, db: Session = Depends(get_
     return sandwiches.create(db=db, sandwich=sandwich)
 
 @app.get("/sandwiches/", response_model=list[schemas.Sandwich], tags=["Sandwiches"])
-def read_sandwiches(db: Session = Depends(get_db)):
+def read_all_sandwiches(db: Session = Depends(get_db)):
     return sandwiches.read_all(db)
 
 @app.get("/sandwiches/{sandwich_id}", response_model=schemas.Sandwich, tags=["Sandwiches"])
@@ -90,7 +92,7 @@ def create_resource(resource: schemas.ResourceCreate, db: Session = Depends(get_
     return resources.create(db=db, resource=resource)
 
 @app.get("/resources", response_model=list[schemas.Resource], tags=["Resources"])
-def read_resources(db: Session = Depends(get_db)):
+def read_all_resources(db: Session = Depends(get_db)):
     return resources.read_all(db)
 
 @app.get("/resources/{resource_id}", response_model=schemas.Resource, tags=["Resources"])
@@ -113,3 +115,34 @@ def delete_one_resource(resource_id: int, db: Session = Depends(get_db)):
     if resource_db is None:
         raise HTTPException(status_code=404, detail="Resource not found")
     return resources.delete(db=db, resource_id=resource_id)
+
+@app.post("/recipes/", response_model=schemas.Recipe, tags=["Recipe"])
+def create_recipe(recipe: schemas.RecipeCreate, db: Session = Depends(get_db)):
+    return recipes.create(db=db, recipe=recipe)
+
+@app.get("/recipes/", response_model=list[schemas.Recipe], tags=["Recipe"])
+def read_all_recipes(db: Session = Depends(get_db)):
+    return recipes.read_all(db=db)
+
+@app.get("/recipes/{recipe_id}", response_model=schemas.Recipe, tags=["Recipe"])
+def get_one_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    recipe_db = recipes.read_one(db, recipe_id=recipe_id)
+    if recipe_db is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipe_db
+
+@app.put("/recipes/{recipe_id}", response_model=schemas.Recipe, tags=["Recipe"])
+def update_one_recipe(recipe_id: int, recipe: schemas.RecipeUpdate, db: Session = Depends(get_db)):
+    recipe_db = recipes.read_one(db, recipe_id=recipe_id)
+    if recipe_db is None:
+        raise HTTPException(status_code=404, detail="Recipe not Found")
+    return recipes.update(db=db, recipe=recipe, recipe_id=recipe_id)
+
+
+
+@app.delete("/recipes/{recipe_id}", response_model=schemas.Recipe, tags=["Recipe"])
+def delete_one_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    recipe_db = recipes.read_one(db, recipe_id=recipe_id)
+    if recipe_db is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipes.delete(db=db, recipe_id=recipe_id)
