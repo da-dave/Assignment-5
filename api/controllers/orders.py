@@ -20,16 +20,18 @@ def create(db: Session, order):
 
 
 def read_all(db: Session):
+
     return db.query(models.Order).all()
 
 
 def read_one(db: Session, order_id):
+
     return db.query(models.Order).filter(models.Order.id == order_id).first()
 
 
 def update(db: Session, order_id, order):
     # Query the database for the specific order to update
-    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    db_order = db.query(models.Order).filter(models.Order.id == order_id)
     # Extract the update data from the provided 'order' object
     update_data = order.model_dump(exclude_unset=True)
     # Update the database record with the new data, without synchronizing the session
